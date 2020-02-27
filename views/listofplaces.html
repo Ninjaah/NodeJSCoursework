@@ -18,6 +18,7 @@
         }
     </style>
     <title>Title</title>
+    <script src="../server.js"></script>
 </head>
 <body>
 <form role="form">
@@ -49,63 +50,63 @@
 <script>
 
     var json; //json is global...
+    json = getAllEvents();
 
     function makeQuery() {
         var startdate = document.getElementById("startingDate").value;
         var enddate = document.getElementById("endingDate").value;
-        if (startdate.length == 0) { // fix this and support empty field
-            return;
-        } else {
-            var xmlhttp = new XMLHttpRequest();
-            xmlhttp.onreadystatechange = function() {
-                if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-                    json = JSON.parse(xmlhttp.responseText);
-                    //myFunction(resultArr);
-                    //document.getElementById("locationInfo").innerHTML = xmlhttp.responseText;
-                    if (json.numOfRows> 0){ // something found
-                        //console.log(json.numOfRows + ", " + json.rows[0].Location_place_name);
-                        showList(json);
-                    }
-                    else {
-                        document.getElementById("locationInfo").innerHTML = "<br/>Ei tapahtumatietoja tältä ajalta.";
 
-                    }
+        var xmlhttp = new XMLHttpRequest();
+        var url = "http://localhost:8081/list_event";
+        xmlhttp.onreadystatechange = function() {
+            if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                var json = JSON.parse(this.response);
+                console.log(json);
+                showList(json,startdate, enddate);
+            }
+        };
+        xmlhttp.open("GET", url, true);
+        xmlhttp.send();
 
-                }
-            };
-            xmlhttp.open("GET", "http://localhost:8080/api/events?start=" + startdate+"&end="+enddate, true);
-            xmlhttp.send();
-        }
     }
 
-    function showList(json) {
+    function showList(json, startdate, enddate) {
         //document.getElementById("locationInfo").innerHTML = "New text!";
         var divElement = document.getElementById("locationInfo");
-
+        console.log("showlist()");
         var i;
         var unOrdered;
         var listElement, nestedElement, unNestedElement;
         var string;
-        for (i in json.rows) {
-            // create a form group div
-            unOrdered = document.createElement("ul");
-            unOrdered.setAttribute("class", "del"); // mark all these dynamically created elements to be "deleted"
-            divElement.appendChild(unOrdered);
 
-            listElement = document.createElement("li");
-            listElement.setAttribute("class", "del");
-            string = json.rows[i].Name;
-            listElement.innerHTML = string;
-            unOrdered.appendChild(listElement);
-            nestedElement = document.createElement("ul");
-            nestedElement.setAttribute("class", "del");
-            listElement.appendChild(nestedElement);
-            unNestedElement = document.createElement("li");
-            unNestedElement.setAttribute("class", "del");
-            string = json.rows[i].Type+", "+json.rows[i].Date+", "+json.rows[i].Time+", "+json.rows[i].Location_place_name;
-            unNestedElement.innerHTML = string;
-            nestedElement.appendChild(unNestedElement);
+        for (i=0; i< Object.keys(json).length;i++) {
+            // create a form group div
+
+            var d1= json[i].Date.slice(0,10);
+
+            if (d1 >= startdate && d1 <= enddate){
+                unOrdered = document.createElement("ul");
+                unOrdered.setAttribute("class", "del"); // mark all these dynamically created elements to be "deleted"
+                divElement.appendChild(unOrdered);
+
+                listElement = document.createElement("li");
+                listElement.setAttribute("class", "del");
+                string = json[i].Name;
+                listElement.innerHTML = string;
+                unOrdered.appendChild(listElement);
+                nestedElement = document.createElement("ul");
+                nestedElement.setAttribute("class", "del");
+                listElement.appendChild(nestedElement);
+                unNestedElement = document.createElement("li");
+                unNestedElement.setAttribute("class", "del");
+                string = json[i].Type+", "+json[i].Date.slice(0,10)+", "+json[i].Location_name;
+
+                unNestedElement.innerHTML = string;
+                nestedElement.appendChild(unNestedElement);
+            }
+
         }
+        console.log(Object.keys(json).length);
         // delete submit-button
         var submitBtn = document.getElementById("submit");
         var parent  = document.getElementById("wholeContainer");
